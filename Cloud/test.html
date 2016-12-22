@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+<link rel="stylesheet" type="text/css" href="style.css">
+<script src="jquery.min.js"></script>
+<script src="tether.js"></script>
+<script src="bootstrap.js"></script>
+
+<script>
+$(document).ready(function(){
+  led1 = {};
+  led2 = {};
+  temperature = {};
+  
+  function extractDeviceData () {
+    $.ajax({
+      url: "http://192.168.100.3:8080/Edge/rest/EdgeService/devices",
+      type: "get", 
+      success: function(response) {
+        console.log(typeof(response));
+
+        var temp = JSON.parse(JSON.stringify(response));
+  
+        var tempLength = temp.length;
+        console.log(tempLength);
+        for (var i = 0; i < tempLength; i++) {
+          if (temp[i].bbbName && temp[i].bbbName == "BBB1"){
+              if (temp[i] && temp[i].devName && temp[i].devName=="LED"){
+                  console.log(temp[i]);
+                  led1["bbid"] = 1;
+                  led1["deviceID"] = temp[i].devId;
+              }
+              
+              else if (temp[i] && temp[i].devName && temp[i].devName=="TEMP"){
+                temperature["bbid"] = 1;
+                temperature["deviceID"] = temp[i].devId;
+              }
+              else if (temp[i] && temp[i].devName && temp[i].devName=="BUTTON"){
+                //ignore
+
+              }
+              
+              else{// ignore
+              } 
+
+          }
+          else if (temp[i].bbbName && temp[i].bbbName == "BBB2"){
+              if (temp[i] && temp[i].devName && temp[i].devName=="LED"){
+                  led2["bbid"] = 2;
+                  led2["deviceID"] = temp[i].devId;
+              }
+              
+              else if (temp[i] && temp[i].devName && temp[i].devName=="TEMP"){
+                temperature["bbid"] = 2;
+                temperature["deviceID"] = temp[i].devId;
+              }
+              else if (temp[i] && temp[i].devName && temp[i].devName=="BUTTON"){
+                //ignore
+
+              }
+              
+              else{// ignore
+              } 
+
+
+          }
+
+          else{
+            // ignore
+          }
+
+        }
+        
+        console.log("lets check");
+        console.log(temperature);
+        console.log(led1);
+        console.log(led2);
+      },
+      error: function(xhr) {
+        extractDeviceData();
+      
+      }
+    });
+  }
+
+
+  extractDeviceData();
+
+
+(function pollTemperature(){
+var server = `http://192.168.100.3:8080/Edge/rest/EdgeService/device/${temperature["bbid"]}/${temperature["deviceID"]}`;
+  console.log(server);
+  
+  setTimeout(function(){
+
+      $.ajax({ url: server,
+        type: "get", //send it through get method
+        success: function(response){
+                    var temp = JSON.parse(JSON.stringify(response));
+          var tempLength = temp.length;
+          console.log(temp);
+          console.log($("#test5").val);
+         console.log(temp.state);
+         $("#test5").val(temp.state);
+
+          console.log($("#test5").val);
+
+          pollTemperature();
+      }, 
+      error: function(xhr) {
+        console.log("error here");
+   
+        pollTemperature();   
+      },
+      dataType: "json"});
+    }, 500);
+})();
+
+
+(function pollLED1(){
+
+  var server = `http://192.168.100.3:8080/Edge/rest/EdgeService/device/${led1["bbid"]}/${led1["deviceID"]}`;
+  console.log(server);
+
+  setTimeout(function(){
+
+      $.ajax({ url: server,
+        type: "get", //send it through get method
+        success: function(response){
+          console.log(response);
+            var temp = JSON.parse(JSON.stringify(response));
+  
+        var tempLength = temp.length;
+        console.log(temp);
+        console.log(typeof(temp.state));
+        
+          if (temp.state && temp.state == "1"){
+              console.log("hello");
+                var $button= $("#button1");
+                $button.text(" ON");
+                $button.css('background-color', '#99ff99');
+          }
+          else{
+
+              console.log("hi");
+              var $button= $("#button1");
+              $button.text("OFF");
+              $button.css('background-color', '#ff66ff');
+          }
+          pollLED1();
+      }, 
+      error: function(xhr) {
+        pollLED1();             
+        console.log("error here");
+      },
+      dataType: "json"});
+    }, 5000);
+})();
+
+
+(function pollLED2(){
+
+  var server = `http://192.168.100.3:8080/Edge/rest/EdgeService/device/${led2["bbid"]}/${led2["deviceID"]}`;
+  console.log(server);
+
+  setTimeout(function(){
+
+      $.ajax({ url: server,
+        type: "get", //send it through get method
+        success: function(response){
+          console.log(response);
+            var temp = JSON.parse(JSON.stringify(response));
+  
+        var tempLength = temp.length;
+        console.log(temp);
+        console.log(typeof(temp.state));
+        
+          if (temp.state && temp.state == "1"){
+              console.log("hello");
+                var $button= $("#button2");
+                $button.text(" ON");
+                $button.css('background-color', '#99ff99');
+          }
+          else{
+
+              console.log("hi");
+              var $button= $("#button2");
+              $button.text("OFF");
+              $button.css('background-color', '#ff66ff');
+          }
+          pollLED2();
+      }, 
+      error: function(xhr) {
+        pollLED2();             
+        console.log("error here");
+      },
+      dataType: "json"});
+    }, 5000);
+})();
+
+
+function onled1() {
+  console.log("sending HTTP request");     
+  var server = `http://192.168.100.3:8080/Edge/rest/EdgeService/actuate/${led1["bbid"]}/${led1["deviceID"]}/1`;
+
+   $.ajax({
+    url: server,
+    type: "get", //send it through get method
+      success: function(response) {
+    
+    },
+    error: function(xhr) {
+
+  //    onled1();             
+    }
+  });
+}
+
+
+function onled2() {
+  console.log("sending HTTP request");     
+
+  var server = `http://192.168.100.3:8080/Edge/rest/EdgeService/actuate/${led2["bbid"]}/${led2["deviceID"]}/1`;
+
+   $.ajax({
+    url: server,
+    type: "get", //send it through get method
+      success: function(response) {
+    
+    },
+    error: function(xhr) {
+    
+    //  onled2();             
+    
+    }
+  });
+
+}
+
+function offled1() {
+  console.log("sending HTTP request");     
+  var server = `http://192.168.100.3:8080/Edge/rest/EdgeService/actuate/${led1["bbid"]}/${led1["deviceID"]}/0`;
+
+   $.ajax({
+    url: server,
+    type: "get", //send it through get method
+      success: function(response) {
+    
+    },
+    error: function(xhr) {
+      
+    //  offled1();             
+    
+    }
+  });
+
+
+}
+
+
+function offled2() {
+  console.log("sending HTTP request");     
+
+  var server = `http://192.168.100.3:8080/Edge/rest/EdgeService/actuate/${led2["bbid"]}/${led2["deviceID"]}/0`;
+
+   $.ajax({
+    url: server,
+    type: "get", //send it through get method
+      success: function(response) {
+    
+    },
+    error: function(xhr) {
+      //offled2();             
+    
+    }
+  });
+
+}
+
+$('#part1 :checkbox').click(function(){ 
+  if($('#part1 :checkbox').prop('checked') == true){
+    onled1();
+  }
+else{
+  offled1();
+}
+});
+
+$('#part2 :checkbox').click(function(){
+  if($('#part2 :checkbox').prop('checked') == true){
+    onled2();
+  }
+  else{
+    offled2();
+  }
+  
+});
+
+});
+</script>
+
+<style>
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {display:none;}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.button {
+    background-color: #ff66ff; /*  */
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+}
+
+.button4 {border-radius: 2px;}
+.button4 {padding: 6px 54px;}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+</style>
+
+
+</head>
+<body>
+<br>
+  <div class="container">
+    <div class="jumbotron">
+      <h1> <center> Internet of Things with Xinu</center> </h1>
+      <p> <center> Sample web application for XINU devices</center> </p>
+      
+      <br>
+<hr>
+  <br>
+      <center><b><h2> LED1</h2></b></center><br>
+      <div class="container">
+        <div class="row">
+          <div class="col-md-4">
+            <div id="part1">
+              <h4>Set LED</h4>
+
+              <label class="switch">
+                <input type="checkbox">
+                <div class="slider round"></div>
+              </label>
+            </div>
+
+          </div>
+        <div class="col-md-4">
+          <h4>Status of LED</h4>
+          <div  id="btn1">    
+            <button type="button"  id="button1" class="button button4">OFF</button>
+         </div> 
+        </div>
+      </div>
+    <br><br>
+
+
+      <center><b><h2> LED2</h2></b></center><br>
+      <div class="container">
+        <div class="row">
+          <div class="col-md-4">
+            <div id="part2">
+              <h4>Set LED</h4>
+
+<!--               <label class="switch">
+                <input type="checkbox">
+                <div class="slider round"></div>
+              </label>
+ -->            </div>
+
+          </div>
+        <div class="col-md-4">
+          <h4>Status of LED</h4>
+        <div  id="btn2">    
+
+            <button type="button"  id="button2" class="button button4">OFF</button>
+         </div> 
+
+
+        </div>
+      </div>
+<br><br>
+      <center><b><h2> Temperature</h2></b></center>
+   
+  <p><h4>Temperature in degree celsius:  <input type="text" id="test5" value="" placeholder="Temperature"></h4>
+      
+</div>
+
+   
+  <hr>
+  
+  <div class="row">
+    <div class="col-xs-12">
+      <footer>
+        <p>&copy; Group 3</p>
+      </footer>
+    </div>
+  </div>
+</div>
+</body>
+
+</html> 
